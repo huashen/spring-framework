@@ -698,8 +698,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.
+		// 记录容器的启动时间.
 		this.startupDate = System.currentTimeMillis();
+		// 记录容器未关闭
 		this.closed.set(false);
+		// 记录容器状态为激活状态
 		this.active.set(true);
 
 		if (logger.isDebugEnabled()) {
@@ -717,11 +720,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
-		// 检查环境变量
+		/**
+		 * 检查环境变量
+		 * 作用：校验设置的必须属性是否能够在系统环境中找到对应的值
+		 *
+		 * 如果在initPropertySources方法中使用getEnvironment().setRequiredProperties(String... keys)设置了必须的属性，而通过this.getProperty(key)
+		 * 没有从系统环境中获取到属性的值，则会抛出MissingRequiredPropertiesException异常
+		 */
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
 		if (this.earlyApplicationListeners == null) {
+			/**
+			 * 在SpringBoot中会有大量的初始化监听器，用于初始化使用
+			 */
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
@@ -732,6 +744,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Allow for the collection of early ApplicationEvents,
 		// to be published once the multicaster is available...
+		//定义早期的应用事件
 		this.earlyApplicationEvents = new LinkedHashSet<>();
 	}
 
@@ -751,7 +764,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		/**
+		 * 刷新bean工厂，判断bean工厂是否已经存在，如果存在需要进行销毁和关闭
+		 *  默认调用的是AbstractRefreshableApplicationContext的refreshBeanFactory方法.
+		 *  刷新Bean工厂时会进行bean定义的加载操作。
+		 */
 		refreshBeanFactory();
+		// 这个方法是本类中定义的一个抽象方法，是一个模板方法，具体的实现在子类中
 		return getBeanFactory();
 	}
 
