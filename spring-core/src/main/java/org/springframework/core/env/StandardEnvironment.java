@@ -72,6 +72,8 @@ public class StandardEnvironment extends AbstractEnvironment {
 	 * @see AbstractEnvironment#customizePropertySources(MutablePropertySources)
 	 * @see #getSystemProperties()
 	 * @see #getSystemEnvironment()
+	 *
+	 * 往资源列表中添加Java进程中的变量和系统的环境变量
 	 */
 	@Override
 	protected void customizePropertySources(MutablePropertySources propertySources) {

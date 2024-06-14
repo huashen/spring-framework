@@ -51,6 +51,9 @@ import org.springframework.util.Assert;
  */
 public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContext {
 
+	/**
+	 * 配置文件数组
+	 */
 	@Nullable
 	private Resource[] configResources;
 
@@ -70,6 +73,8 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 * @see #setConfigLocation
 	 * @see #setConfigLocations
 	 * @see #afterPropertiesSet()
+	 *
+	 * 指定ApplicationContext的父容器
 	 */
 	public ClassPathXmlApplicationContext(ApplicationContext parent) {
 		super(parent);
@@ -139,8 +144,11 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			throws BeansException {
 
 		super(parent);
+
+		// 根据提供的路径，处理成配置文件数组(以分号、逗号、空格、tab、换行符分割)
 		setConfigLocations(configLocations);
 		if (refresh) {
+			//spring初始化的核心方法
 			refresh();
 		}
 	}

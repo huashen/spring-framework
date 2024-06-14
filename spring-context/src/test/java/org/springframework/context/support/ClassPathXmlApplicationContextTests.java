@@ -49,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 /**
  * @author Juergen Hoeller
  * @author Chris Beams
+ * classPathXmlApplicationContext 测试用例
  */
 public class ClassPathXmlApplicationContextTests {
 

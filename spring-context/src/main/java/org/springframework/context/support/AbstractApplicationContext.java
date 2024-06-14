@@ -312,6 +312,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * form, allowing for further customization.
 	 * <p>If none specified, a default environment will be initialized via
 	 * {@link #createEnvironment()}.
+	 *
+	 * 创建环境变量相关的操作
 	 */
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
@@ -515,42 +517,152 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
+		//为了避免`refresh()` 还没结束，再次发起启动或者销毁容器引起的冲突
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			/**
+			 * 1.准备上下文的刷新工作，记录bean容器的启动时间，容器活跃状态
+			 *    验证系统中一些属性和属性值的设置等.
+			 *    使用LinkedHashSet初始化earlyApplicationListeners和earlyApplicationEvents
+			 */
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			/**
+			 * 2.获取Bean工厂，期间会做解析和加载bean定义的一些列工作.生成BeanDefinition对象.
+			 * 此处返回的beanFactory的真实类型为：DefaultListableBeanFactory
+			 *
+			 *
+			 * 自定义的xsd约束文件也会在该步骤进行解析，通过实现BeanDefinitionParser接口，并实现parse方法
+			 * 解析自定义标签时通过实现NamespaceHandlerSupport接口，并实现init方法进行实现
+			 */
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			/**
+			 * 3.bean工厂的初始化准备工作，设置bean工厂的一些属性
+			 * 比如：创建bean工厂时，需要忽略哪些接口，需要注册哪些bean，需要设置哪些Bean的后置处理器等.
+			 *
+			 * 例如常用的：ApplicationContextAwareBeanPostProcessor, ApplicationListenerDetector
+			 *
+			 * 此外，注册一些和环境相关的bean单实例bean.
+			 */
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				/**
+				 * 4.Bean定义加载完毕之后实现，目前方法为空实现，留给开发人员进行自定义扩展。
+				 * 	  和BeanFactoryPostProcessor中的方法postProcessBeanFactory相同
+				 *
+				 * 该方法在Bean定义加载完毕之后，Bean实例化之前会执行
+				 * 比如在BeanFactory加载完所有的Bean定义之后，想要修改某个bean的定义信息，可以通过重写这个方法实现.
+				 * 比如：在xml中配置了<bean id="user"><property name="name" value="wb"></property></bean>
+				 * 如果想在不修改配置文件的情况下修改name的值，可以使用如下的方法：
+
+				 class MyApplicationContext extends ClassPathXmlApplicationContext {
+					 public MyApplicationContext(String s) {
+					 	super(s);
+					 }
+
+					 @Override
+					 protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+						 BeanDefinition beanDefinition = beanFactory.getBeanDefinition("user");
+						 PropertyValue propertyValue=new PropertyValue("name", "www.so.com");
+						 beanDefinition.getPropertyValues().addPropertyValue(propertyValue);
+					 }
+				 */
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				/**
+				 * 5.执行beanFactory的后置处理器
+				 *
+				 * 先执行BeanDefinitionRegistryPostProcessor接口的实现类的postProcessBeanDefinitionRegistry方法，
+				 *   执行过程中，也是先执行实现了优先级接口PriorityOrdered的BeanDefinitionRegistryPostProcessor的postProcessBeanDefinitionRegistry方法
+				 *   然后执行实现了Ordered接口的...
+				 *   最后执行未实现PriorityOrdered接口和Ordered接口的...
+				 *
+				 * 然后执行BeanFactoryPostProcessor接口的实现类的postProcessBeanFactory方法
+				 *   执行过程中，也是先执行实现了优先级接口PriorityOrdered的BeanFactoryPostProcessor的postProcessBeanFactory方法
+				 *   然后执行实现了Ordered接口的...
+				 *   最后执行未实现PriorityOrdered接口和Ordered接口的...
+				 *
+				 *   其中也涉及到了排序过程
+				 *
+				 *
+				 *  配置类中的Selector类型的组件和@Component,@ComponentScan中的元数据信息也会在该步骤中进行解析
+				 *    还包括执行条件注解@Condition的回调逻辑
+				 *
+				 *
+				 *  ImportBeanDefinitionRegistrar对应的registerBeanDefinitions方法也会在该步骤中调用，给容器中注册自定义的组件.
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				/**
+				 * 6.注册所有bean的后置处理器.用来拦截Bean的创建
+				 *
+				 * 注册所有实现了BeanPostProcessor接口的后置处理器
+				 *   执行过程中，也是先执行实现了优先级接口PriorityOrdered接口的BeanPostProcessor的addBeanPostProcessor方法
+				 *   然后执行实现了Ordered接口的...
+				 *   最后执行未实现PriorityOrdered接口和Ordered接口的...
+				 *
+				 *   其中也涉及到了排序过程
+				 */
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				/**
+				 * 7.初始化消息源
+				 * 用来做国际化，消息绑定，消息解析等功能
+				 * 一般在SpringMVC中会使用到.
+				 */
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				/**
+				 * 8.初始化事件派发器，用来发布事件
+				 * 	如果容器中有类型为ApplicationEventMulticaster的派发器组件，则直接获取使用
+				 * 	如果容器中没有，则默认创建一个类型为SimpleApplicationEventMulticaster的派发器，供容器派发事件使用
+				 */
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				/**
+				 * 9.用来初始化一些特殊的Bean，目前默认是空方法，未实现，可以通过继承AbstractApplicationContext类，
+				 *   然后覆写该方法进行自定义特殊bean的初始化.
+				 *
+				 * 比如：AbstractRefreshableWebApplicationContext中onRefresh方法用来初始化主题能力.
+				 *
+				 * SpringBoot也是在该步骤中启动内嵌Tomcat容器的
+				 */
 				onRefresh();
 
 				// Check for listener beans and register them.
+				/**
+				 * 10.注册监听器
+				 * 将监听器绑定到广播器上，将监听器对应的beanName绑定到到第8步初始化的事件派发器中，
+				 *   如果之前有发布的事件，则直接通过事件派发器将事件派发出去.
+				 */
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				/**
+				 * 11.初始化所有剩余的单实例Bean(没有使用懒加载的Bean).整个Spring IOC的核心.
+				 *
+				 * 包括执行@PostConstruct标注的方法.
+				 *
+				 * 注意：SpringMVC的父子容器创建Bean的过程：
+				 *   SpringMVC中，存在着父容器和子容器。当父容器启动之后，会通过该方法将所有的Dao和Service对应的Bean创建出来，保存到beanFactory的单例缓存容器中
+				 *   当子容器启动之后，也会通过该方法将所有的Controller，viewResolver，HandlerMapping对应的Bean创建出来，然后放入到beanFactory的单例缓存容器中.
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				/**
+				 *  12.发布事件。例如容器中的刷新事件:ContextRefreshedEvent就是在这一步中发布. SpringCloud在该步骤中会启动web服务
+				 *  */
 				finishRefresh();
 			}
 
@@ -561,9 +673,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				}
 
 				// Destroy already created singletons to avoid dangling resources.
+				// 清空单实例bean对应的map及缓存
 				destroyBeans();
 
 				// Reset 'active' flag.
+				// 设置容器的活跃状态为false
 				cancelRefresh(ex);
 
 				// Propagate exception to caller.
@@ -598,10 +712,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		// 初始化加载配置文件方法，并没有具体实现，一个留给用户的扩展点
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		// 检查环境变量
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...

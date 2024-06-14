@@ -99,6 +99,9 @@ public interface ConfigurablePropertyResolver extends PropertyResolver {
 	 * non-{@code null} value.
 	 * @throws MissingRequiredPropertiesException if any of the required
 	 * properties are not resolvable.
+	 * 其中检查环境变量的核心方法为，简单来说就是如果存在环境变量的value
+	 *
+	 * 为空的时候就抛异常，然后停止启动Spring
 	 */
 	void validateRequiredProperties() throws MissingRequiredPropertiesException;
 
