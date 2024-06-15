@@ -1109,14 +1109,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@Nullable
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
+		// 在实例化AnnotationAwareAspectJAutoProxyCreator之前进行解析
 		Object bean = null;
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
 			// Make sure bean class is actually resolved at this point.
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
+					// 调用AnnotationAwareAspectJAutoProxyCreator的postProcessBeforeInitialization()
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 					if (bean != null) {
+						// 调用调用AnnotationAwareAspectJAutoProxyCreator的postProcessAfterInitialization()
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
 				}

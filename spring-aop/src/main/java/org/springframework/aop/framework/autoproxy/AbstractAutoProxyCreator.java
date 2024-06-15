@@ -241,6 +241,14 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return wrapIfNecessary(bean, beanName, cacheKey);
 	}
 
+	/*
+	 * postProcessBeforeInstantiation方法中，以shoudSkip()为入口，完成了
+	 * AnnotationAwareAspectJAutoProxyCreator的获取通知注解的底层方法
+	 * 1. 从SpringIOC中筛选出@AspectJ注解修饰的类
+	 * 2. 通过反射获取该类的所有方法
+	 * 3. 解析所有通知，包装为InstantiationModelAwarePointcutAdvisorImpl类型，存放在List<Advisor>中
+	 * 4. 将解析的所有通知存放在advisorsCache中（Map<String, List<Advisor>>类型），方便postProcessAfterInstantiation调用
+	 */
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
 		Object cacheKey = getCacheKey(beanClass, beanName);
@@ -295,8 +303,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Override
 	public Object postProcessAfterInitialization(@Nullable Object bean, String beanName) {
 		if (bean != null) {
+			//根据给定的bean的class和name构建出个key，格式：beanClassName_beanName
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (this.earlyProxyReferences.remove(cacheKey) != bean) {
+				//如果它适合被代理，则需要封装指定bean
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
