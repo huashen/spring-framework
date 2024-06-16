@@ -341,6 +341,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @param beanName the name of the bean
 	 * @param cacheKey the cache key for metadata access
 	 * @return a proxy wrapping the bean, or the raw bean instance as-is
+	 *
+	 * 1.从缓存中获取通知
+	 * 2.创建代理
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
 		// 如果已经处理过
@@ -466,6 +469,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
 			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
 
+		// 将beanName设置为目标代理类
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
@@ -488,15 +492,21 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				// 判断是否需要添加代理接口，由于这里设置的是<aop:aspectj-autoproxy/>，
+				// 自然不会使用到代理接口的方式，所以该方法所做的工作为：proxyFactory.setProxyTargetClass(true);
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
 
+		// 封装通知，然后将advisors添加到ProxyFactory中
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
+		// 设置dialing类
 		proxyFactory.setTargetSource(targetSource);
+		// 定制代理
 		customizeProxyFactory(proxyFactory);
 
+		// 用来控制代理工厂被配置之后，是否还允许修改通知；默认值为false，即在代理被配置之后，不允许修改代理的配置。
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
 			proxyFactory.setPreFiltered(true);
@@ -543,12 +553,14 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected Advisor[] buildAdvisors(@Nullable String beanName, @Nullable Object[] specificInterceptors) {
 		// Handle prototypes correctly...
+		//解析拦截器名并进行注册
 		Advisor[] commonInterceptors = resolveInterceptorNames();
 
 		List<Object> allInterceptors = new ArrayList<>();
 		if (specificInterceptors != null) {
 			if (specificInterceptors.length > 0) {
 				// specificInterceptors may equals PROXY_WITHOUT_ADDITIONAL_INTERCEPTORS
+				// 将通知都封装在allInterceptors中
 				allInterceptors.addAll(Arrays.asList(specificInterceptors));
 			}
 			if (commonInterceptors.length > 0) {
@@ -569,6 +581,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
 		for (int i = 0; i < allInterceptors.size(); i++) {
+			// 通过advisorAdapterRegistry这个适配器来包装通知
 			advisors[i] = this.advisorAdapterRegistry.wrap(allInterceptors.get(i));
 		}
 		return advisors;

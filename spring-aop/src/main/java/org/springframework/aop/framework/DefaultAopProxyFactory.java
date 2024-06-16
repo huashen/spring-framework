@@ -50,6 +50,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		// 如果aop配置文件没有配置属性<aop:aspectj-autoproxy />属性，则返回JdkDynamicAopProxy的实例对象
 		if (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config)) {
 			Class<?> targetClass = config.getTargetClass();
 			if (targetClass == null) {
@@ -59,9 +60,14 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
 				return new JdkDynamicAopProxy(config);
 			}
+			/**
+			 * targetClass就是示例中的TestBean，由于TestBean不是接口，并且不是代理类
+			 * 所以要返回的ObjenesisCglibAopProxy实例对象，也就是CGLIB代理
+			 */
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {
+			//返回jdk动态代理
 			return new JdkDynamicAopProxy(config);
 		}
 	}

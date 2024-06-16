@@ -222,6 +222,7 @@ public abstract class AopUtils {
 	 * @return whether the pointcut can apply on any method
 	 */
 	public static boolean canApply(Pointcut pc, Class<?> targetClass, boolean hasIntroductions) {
+		// targetClass为要代理的类，这里就是TestBean
 		Assert.notNull(pc, "Pointcut must not be null");
 		if (!pc.getClassFilter().matches(targetClass)) {
 			return false;
@@ -245,6 +246,7 @@ public abstract class AopUtils {
 		classes.addAll(ClassUtils.getAllInterfacesForClassAsSet(targetClass));
 
 		for (Class<?> clazz : classes) {
+			// 通过反射工具类获取到被代理类的所有成员方法，包括其父类Object的所有方法
 			Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
 			for (Method method : methods) {
 				if (introductionAwareMethodMatcher != null ?
@@ -285,6 +287,7 @@ public abstract class AopUtils {
 			return ((IntroductionAdvisor) advisor).getClassFilter().matches(targetClass);
 		}
 		else if (advisor instanceof PointcutAdvisor) {
+			// 因为在AspectJTest中设置了切点test()，所以程序会走到这里来
 			PointcutAdvisor pca = (PointcutAdvisor) advisor;
 			return canApply(pca.getPointcut(), targetClass, hasIntroductions);
 		}
@@ -307,12 +310,14 @@ public abstract class AopUtils {
 			return candidateAdvisors;
 		}
 		List<Advisor> eligibleAdvisors = new ArrayList<>();
+		// 迭代出candidateAdvisors里的通知，包括after、before和around通知
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
 			}
 		}
 		boolean hasIntroductions = !eligibleAdvisors.isEmpty();
+		// 这里遍历通知：after、before和around通知，通过canApply逐一去判断是否可以应用于bean
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor) {
 				// already processed

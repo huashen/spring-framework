@@ -117,7 +117,9 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 	@Override
 	public List<Advisor> getAdvisors(MetadataAwareAspectInstanceFactory aspectInstanceFactory) {
+		// 获取标记为AspectJ的类
 		Class<?> aspectClass = aspectInstanceFactory.getAspectMetadata().getAspectClass();
+		// 获取标记为AspectJ的name
 		String aspectName = aspectInstanceFactory.getAspectMetadata().getAspectName();
 		validate(aspectClass);
 
@@ -127,6 +129,8 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 				new LazySingletonAspectInstanceFactoryDecorator(aspectInstanceFactory);
 
 		List<Advisor> advisors = new ArrayList<>();
+		// 对aspectClass的每一个带有注解的方法进行循环（带有PointCut注解的方法除外），取得Advisor，并添加到集合里。
+		// (这是里应该是取得Advice，然后取得我们自己定义的切面类中PointCut，组合成Advisor)
 		for (Method method : getAdvisorMethods(aspectClass)) {
 			// Prior to Spring Framework 5.2.7, advisors.size() was supplied as the declarationOrderInAspect
 			// to getAdvisor(...) to represent the "current position" in the declared methods list.
@@ -136,6 +140,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 			// discovered via reflection in order to support reliable advice ordering across JVM launches.
 			// Specifically, a value of 0 aligns with the default value used in
 			// AspectJPrecedenceComparator.getAspectDeclarationOrder(Advisor).
+			//将类中的方法封装成Advisor
 			Advisor advisor = getAdvisor(method, lazySingletonAspectInstanceFactory, 0, aspectName);
 			if (advisor != null) {
 				advisors.add(advisor);

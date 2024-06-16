@@ -45,6 +45,14 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @since 2.0
  * @see org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory
+ *
+ * aop核心类
+ *
+ * 1.解析通知存储到缓存中
+ * 2.从缓存中获取通知，筛选通知
+ * 3.包装通知，初始化ProxyFactory
+ * 4.使用ProxyFactory来创建代理（JDK动态代理、CGLIB代理）
+ * 5.代理最终实现AOP的核心逻辑
  */
 @SuppressWarnings("serial")
 public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
@@ -89,6 +97,13 @@ public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorA
 	@Override
 	protected List<Advisor> findCandidateAdvisors() {
 		// Add all the Spring advisors found according to superclass rules.
+		/*
+		 * 当使用注解方式配置AOP的时候并不是丢弃了对XML配置的支持，
+		 * 在这里调用父类方法加载配置文件中的AOP声明。AnnotationAwareAspectJAutoProxyCreator间接
+		 * 继承了AbstractAdvisorsAutoProxyCreator，在实现获取通知的方法中除了保留了父类的获取配置文件中定义的通知外，
+		 * 同时还添加了获取Bean的注解通知的功能，这个功能就是下面的this.aspectJAdvisorsBuilder....实现的
+		 *
+		 */
 		List<Advisor> advisors = super.findCandidateAdvisors();
 		// Build Advisors for all AspectJ aspects in the bean factory.
 		if (this.aspectJAdvisorsBuilder != null) {
