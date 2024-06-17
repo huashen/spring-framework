@@ -242,7 +242,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	}
 
 	/*
-	 * postProcessBeforeInstantiation方法中，以shoudSkip()为入口，完成了
+	 * Spring在实例化Bean的前后会分别调用方法postProcessBeforeInstantiation和postProcessAfterInstantiation
+	 * postProcessBeforeInstantiation方法中，以shouldSkip()为入口，完成了
 	 * AnnotationAwareAspectJAutoProxyCreator的获取通知注解的底层方法
 	 * 1. 从SpringIOC中筛选出@AspectJ注解修饰的类
 	 * 2. 通过反射获取该类的所有方法
@@ -257,6 +258,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			if (this.advisedBeans.containsKey(cacheKey)) {
 				return null;
 			}
+			//加载所有增强
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
