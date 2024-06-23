@@ -115,6 +115,9 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 	}
 
 
+	/**
+	 * 从@Aspect标识的类上获取@Before，@Pointcut等注解的信息及其标识的方法的信息，生成增强
+	 */
 	@Override
 	public List<Advisor> getAdvisors(MetadataAwareAspectInstanceFactory aspectInstanceFactory) {
 		// 获取标记为AspectJ的类

@@ -54,11 +54,13 @@ class ObjenesisCglibAopProxy extends CglibAopProxy {
 
 	@Override
 	protected Object createProxyClassAndInstance(Enhancer enhancer, Callback[] callbacks) {
+		// 通过增强器获取代理类的class对象
 		Class<?> proxyClass = enhancer.createClass();
 		Object proxyInstance = null;
 
 		if (objenesis.isWorthTrying()) {
 			try {
+				// 创建代理类实例对象
 				proxyInstance = objenesis.newInstance(proxyClass, enhancer.getUseCache());
 			}
 			catch (Throwable ex) {
@@ -83,6 +85,7 @@ class ObjenesisCglibAopProxy extends CglibAopProxy {
 			}
 		}
 
+		// 为代理类实例创建回调方法（拦截器链）
 		((Factory) proxyInstance).setCallbacks(callbacks);
 		return proxyInstance;
 	}

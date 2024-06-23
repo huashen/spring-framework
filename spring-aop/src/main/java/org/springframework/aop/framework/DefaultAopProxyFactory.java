@@ -50,6 +50,19 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		/**
+		 * 如果目标对象实现了接口，默认情况下会采用JDK的动态代理实现AOP
+		 * 如果目标对象实现了接口，可以强制使用CGLIB实现AOP
+		 * 如果目标对象没有实现了接口，必须采用CGLIB库，Spring会自动在JDK动态代理 和CGLIB之间转换
+		 *
+		 * 如何强制使用CGLIB实现AOP?
+		 * （1）添加 CGLIB 库，Spring_HOME/cglib/*.jar。
+		 * （2）在 Spring 配置文件中加人<aop:aspectj-autoproxy proxy-target-class="true"/>。
+		 *
+		 * JDK动态代理和CGLIB字节码生成的区别？JDK动态代理只能对实现了接口的类生成代理，而不能针对类。
+		 * CGLIB是针对类实现代理，主要是对指定的类生成一个子类，覆盖其中的方法，因为是继承，所以该类或方法最好不要声明成final。#
+		 */
+
 		// 如果aop配置文件没有配置属性<aop:aspectj-autoproxy />属性，则返回JdkDynamicAopProxy的实例对象
 		if (config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config)) {
 			Class<?> targetClass = config.getTargetClass();
@@ -57,17 +70,20 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 				throw new AopConfigException("TargetSource cannot determine target class: " +
 						"Either an interface or a target is required for proxy creation.");
 			}
+			//手动设置创建Cglib代理类后，如果目标bean是一个接口，也要创建jdk代理类
+			//如果targetClass本身是个接口或者targetClass是JDK Proxy生成的,则使用JDK动态代理
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
 				return new JdkDynamicAopProxy(config);
 			}
 			/**
 			 * targetClass就是示例中的TestBean，由于TestBean不是接口，并且不是代理类
 			 * 所以要返回的ObjenesisCglibAopProxy实例对象，也就是CGLIB代理
+			 * 如果targetClass本身是个接口或者targetClass是JDK Proxy生成的,则使用JDK动态代理。
 			 */
 			return new ObjenesisCglibAopProxy(config);
 		}
 		else {
-			//返回jdk动态代理
+			//默认创建jdk代理
 			return new JdkDynamicAopProxy(config);
 		}
 	}
