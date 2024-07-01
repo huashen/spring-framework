@@ -243,11 +243,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
 			throws BeansException {
 
+		//解析bean的真正name，如果bean是工厂类，name前缀会加&，需要去掉
 		String beanName = transformedBeanName(name);
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		//核心1：从单例容器中获取缓存的bean
 		Object sharedInstance = getSingleton(beanName);
+		//如果从单例容器中到缓存的bean而且构造函数参数列表为空
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -258,12 +261,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			//核心2：直接获取实例
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
+			//验证当前bean实例是否正在创建中，如果是 直接抛出异常
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -291,11 +296,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				//核心3：将当前bean实例放入alreadyCreated集合里，标识这个bean准备创建了
 				markBeanAsCreated(beanName);
 			}
 
 			try {
+				//从BeanDefinitions中获取该实例的BeanDefinition
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
+				//检查要创建的实例bean的修饰符，是否允许被实例化
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
@@ -319,18 +327,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					//核心4：创建单例bean
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							//核心5：真正创建bean的方法
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
 							// Explicitly remove instance from singleton cache: It might have been put there
 							// eagerly by the creation process, to allow for circular reference resolution.
 							// Also remove any beans that received a temporary reference to the bean.
+							//如果创建bean异常 做一些清除工作
+							//包括将bean从alreadyCreated，singletonsCurrentlyInCreation等容器中清除
 							destroySingleton(beanName);
 							throw ex;
 						}
 					});
+					//获取真正的bean，由于bean可以通过FactoryBean或者工厂bean的方式创建
+					//所以这个方法用于从FactoryBean或者工厂bean获取要创建的真正的bean
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
