@@ -1804,6 +1804,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
+		// 如果bean实例不是FactoryBean 但name又是工厂的前缀引用&,直接抛异常
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;
@@ -1829,16 +1830,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			mbd.isFactoryBean = true;
 		}
 		else {
+			//如果BeanDefinition为null，则从factoryBeanObjectCache查找实例
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
 			// Return bean instance from factory.
+			//经过上面判断已经确定beanInstance是FactoryBean
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
+			// 如果bean是一个FactoryBean则缓存起来
 			if (mbd == null && containsBeanDefinition(beanName)) {
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			//这个就复杂了，主要用于当BeanDefinition的属性值
+			//又是一个BeanDefinition的时候的解析赋值，后面aop还会分析
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;
