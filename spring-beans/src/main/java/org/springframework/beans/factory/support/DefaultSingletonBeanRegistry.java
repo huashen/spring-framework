@@ -222,8 +222,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
+			//再次尝试从单例容器中获取
 			Object singletonObject = this.singletonObjects.get(beanName);
+			//判断单例IOC容器是否已经被销毁
 			if (singletonObject == null) {
+				//如果单例IOC容器都被销毁了 就直接终止bean的创建
 				if (this.singletonsCurrentlyInDestruction) {
 					throw new BeanCreationNotAllowedException(beanName,
 							"Singleton bean creation not allowed while singletons of this factory are in destruction " +
@@ -232,6 +235,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				//创建前检查 bean初始化的前置操作可以被覆盖，
+				//默认检查当前bean是否正在创建的bean的容器中
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -239,6 +244,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//核心方法最终会调用到上一个方法的匿名内部类的getObject
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -265,6 +271,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					//将创建的bean放入到单例IOC容器中
 					addSingleton(beanName, singletonObject);
 				}
 			}
