@@ -30,6 +30,8 @@ import org.springframework.lang.Nullable;
  * @see #setAdviceBeanName
  * @see TransactionInterceptor
  * @see TransactionAttributeSourceAdvisor
+ *
+ * Pointcut（切点）+Advice（增强逻辑）
  */
 @SuppressWarnings("serial")
 public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFactoryPointcutAdvisor {
@@ -37,6 +39,9 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	@Nullable
 	private TransactionAttributeSource transactionAttributeSource;
 
+	/**
+	 * 切点
+	 */
 	private final TransactionAttributeSourcePointcut pointcut = new TransactionAttributeSourcePointcut() {
 		@Override
 		@Nullable

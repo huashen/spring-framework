@@ -90,7 +90,10 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * (typically used with AspectJ class weaving)
 	 */
 	public AnnotationTransactionAttributeSource(boolean publicMethodsOnly) {
+		// 这里设置了true，说明事务只能在public方法上使用
 		this.publicMethodsOnly = publicMethodsOnly;
+		// 像jta ejb默认不会用到，有兴趣可以自己了解了解
+		// 所以这里只会用到SpringTransactionAnnotationParser，解析Transactional注解的
 		if (jta12Present || ejb3Present) {
 			this.annotationParsers = new LinkedHashSet<>(4);
 			this.annotationParsers.add(new SpringTransactionAnnotationParser());

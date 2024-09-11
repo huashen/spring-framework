@@ -45,7 +45,9 @@ public class ProxyTransactionManagementConfiguration extends AbstractTransaction
 			TransactionAttributeSource transactionAttributeSource, TransactionInterceptor transactionInterceptor) {
 
 		BeanFactoryTransactionAttributeSourceAdvisor advisor = new BeanFactoryTransactionAttributeSourceAdvisor();
+		//TransactionAttributeSource用来寻找切点 通俗的说就是寻找在哪个对象的哪个方法上做增强逻辑 在spring事务里即寻找Transactional注解
 		advisor.setTransactionAttributeSource(transactionAttributeSource);
+		//设置advice(增强逻辑) 即 TransactionInterceptor
 		advisor.setAdvice(transactionInterceptor);
 		if (this.enableTx != null) {
 			advisor.setOrder(this.enableTx.<Integer>getNumber("order"));

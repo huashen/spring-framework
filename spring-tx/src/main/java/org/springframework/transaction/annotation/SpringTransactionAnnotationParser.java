@@ -47,6 +47,7 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 	@Override
 	@Nullable
 	public TransactionAttribute parseTransactionAnnotation(AnnotatedElement element) {
+		//判断是否加了 Transactional 注解
 		AnnotationAttributes attributes = AnnotatedElementUtils.findMergedAnnotationAttributes(
 				element, Transactional.class, false, false);
 		if (attributes != null) {
@@ -61,6 +62,12 @@ public class SpringTransactionAnnotationParser implements TransactionAnnotationP
 		return parseTransactionAnnotation(AnnotationUtils.getAnnotationAttributes(ann, false, false));
 	}
 
+	/**
+	 * 解析注解生成事务的配置信息，如隔离级别 超时时间 是否只读
+	 *
+	 * @param attributes
+	 * @return
+	 */
 	protected TransactionAttribute parseTransactionAnnotation(AnnotationAttributes attributes) {
 		RuleBasedTransactionAttribute rbta = new RuleBasedTransactionAttribute();
 
