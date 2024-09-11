@@ -1,7 +1,7 @@
 ### spring源码阅读，版本5.2.x
 
 本地ide调试
-![](http://cdn.longhuashen.com/spring-souce-02.png)
+![](http://cdn.longhuashen.com/spring-debug-01.png)
 
 # <img src="src/docs/asciidoc/images/spring-framework.png" width="80" height="80"> Spring Framework [![Build Status](https://ci.spring.io/api/v1/teams/spring-framework/pipelines/spring-framework-5.2.x/jobs/build/badge)](https://ci.spring.io/teams/spring-framework/pipelines/spring-framework-5.2.x?groups=Build")
 
