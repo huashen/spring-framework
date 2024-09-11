@@ -21,6 +21,6 @@ public class TestBean {
 	}
 
 	public void test() {
-		System.out.println("test");
+		System.out.println("龙猫 test spring源码");
 	}
 }
