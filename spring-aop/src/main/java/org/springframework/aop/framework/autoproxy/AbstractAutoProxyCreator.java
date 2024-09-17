@@ -467,6 +467,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * already pre-configured to access the bean
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
+	 *
+	 * 第三个参数携带了所有的 advisors
+	 * 第四个参数 targetSource 携带了真实实现的信息
 	 */
 	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
 			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
@@ -479,6 +482,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.copyFrom(this);
 
+		// 在 schema-based 的配置方式中，我们介绍过，如果希望使用 CGLIB 来代理接口，可以配置
+		// proxy-target-class="true",这样不管有没有接口，都使用 CGLIB 来生成代理：
+		//   <aop:config proxy-target-class="true">......</aop:config>
 		if (proxyFactory.isProxyTargetClass()) {
 			// Explicit handling of JDK proxy targets (for introduction advice scenarios)
 			if (Proxy.isProxyClass(beanClass)) {
@@ -496,6 +502,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			else {
 				// 判断是否需要添加代理接口，由于这里设置的是<aop:aspectj-autoproxy/>，
 				// 自然不会使用到代理接口的方式，所以该方法所做的工作为：proxyFactory.setProxyTargetClass(true);
+				// 点进去稍微看一下代码就知道了，主要就两句：
+				// 1. 有接口的，调用一次或多次：proxyFactory.addInterface(ifc);
+				// 2. 没有接口的，调用：proxyFactory.setProxyTargetClass(true);
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
