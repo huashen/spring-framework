@@ -75,19 +75,19 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 
 	/**
-	 * 一级缓存
+	 * 一级缓存 存放完整的bean实例
 	 */
 	/** Cache of singleton objects: bean name to bean instance. */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/**
-	 * 三级缓存
+	 * 三级缓存 存放ObjectFactory
 	 */
 	/** Cache of singleton factories: bean name to ObjectFactory. */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/**
-	 * 二级缓存
+	 * 二级缓存 保存半成品的bean实例/代理的bean实例beanProxy 目标bean还是半成品
 	 */
 	/** Cache of early singleton objects: bean name to bean instance. */
 	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
@@ -189,9 +189,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		// Quick check for existing instance without full singleton lock
 		//从单例的IOC也就是hashMap中获取是否已经存在bean实例
+		//获取实例->1.先从一级缓存拿
 		Object singletonObject = this.singletonObjects.get(beanName);
 		//如果缓存不存在&&当前正常创建的单例对象就是该bean实例就进入创建方法
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			//获取实例->2.再从二级缓存拿
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			if (singletonObject == null && allowEarlyReference) {
 				//为了线程安全将单例的IOC容器锁起来
@@ -203,6 +205,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
 							//如果还是找不到就从bean工厂类的缓存中查找
+							//获取实例->3.从三级缓存拿
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
 								//如果存在创建该实例的bean的工厂类 则通过工厂类创建bean
