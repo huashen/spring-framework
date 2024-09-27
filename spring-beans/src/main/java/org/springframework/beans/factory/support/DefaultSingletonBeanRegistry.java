@@ -164,6 +164,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
 		synchronized (this.singletonObjects) {
+			//往三级缓存singletonFactories存放数据，清除二级缓存中beanName对应的数据
 			if (!this.singletonObjects.containsKey(beanName)) {
 				this.singletonFactories.put(beanName, singletonFactory);
 				this.earlySingletonObjects.remove(beanName);
@@ -235,7 +236,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
-			//再次尝试从单例容器中获取
+			//再次尝试从单例容器中获取 从一级缓存中获取
 			Object singletonObject = this.singletonObjects.get(beanName);
 			//判断单例IOC容器是否已经被销毁
 			if (singletonObject == null) {
@@ -250,6 +251,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 				//创建前检查 bean初始化的前置操作可以被覆盖，
 				//默认检查当前bean是否正在创建的bean的容器中
+				//A->B-C-A 在这里将B的beanName添加到isSingletonCurrentlyInCreation
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
@@ -258,6 +260,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 				try {
 					//核心方法最终会调用到上一个方法的匿名内部类的getObject
+					//最终调用匿名内部类创建bean
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
