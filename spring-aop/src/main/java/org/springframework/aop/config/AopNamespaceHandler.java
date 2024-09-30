@@ -51,6 +51,22 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * @author Adrian Colyer
  * @author Juergen Hoeller
  * @since 2.0
+ * Spring AOP在第一阶段完成任务的主要入口类
+ *
+ * 核心流程：
+ * 读取xml文件遇到  <aop:aspectj-autoproxy/>标签时，找到命名空间处理器AopNamespaceHandler,然后找到处理该标签的类AspectJAutoProxyBeanDefinitionParser
+ * 通过AspectJAutoProxyBeanDefinitionParser的parse方法，将AspectJAwareAdvisorAutoProxyCreator注册到容器的声明周期中。
+ *
+ * 创建bean阶段：
+ *
+ *
+ * 执行AspectJAwareAdvisorAutoProxyCreator的postProcessBeforeInstantiation校验目标类是否是Aspect类和AOP基础类以及是否需要跳过不需要执行代理的类
+ *
+ *
+ * 获取beanDefinitions中所有使用了Aspect注解的类，然后将切面方法根据使用的注解生成Advisor类放入到缓存（关键）
+ *
+ *
+ * 调用AspectJAwareAdvisorAutoProxyCreator的postProcessAfterInitialization的方法，对需要增强的类创建代理。
  */
 public class AopNamespaceHandler extends NamespaceHandlerSupport {
 
