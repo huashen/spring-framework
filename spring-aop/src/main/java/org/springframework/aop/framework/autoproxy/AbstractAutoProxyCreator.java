@@ -252,13 +252,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
+		//构建一个缓存key
 		Object cacheKey = getCacheKey(beanClass, beanName);
 
 		if (!StringUtils.hasLength(beanName) || !this.targetSourcedBeans.contains(beanName)) {
+			//如果当前beanClass的缓存key 存在于Class为Advise的缓存中，表示当前的beanClass是Advise类
 			if (this.advisedBeans.containsKey(cacheKey)) {
 				return null;
 			}
 			//加载所有增强
+			//核心校验：1 当前类是否是AOP的基础类 2、当前类是否应该跳过不生成代理
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
@@ -268,6 +271,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		// Create proxy here if we have a custom TargetSource.
 		// Suppresses unnecessary default instantiation of the target bean:
 		// The TargetSource will handle target instances in a custom fashion.
+		//这部分主要是用于实现了TargetSource接口的bean，然后从getTarget中获取对象 创建代理
 		TargetSource targetSource = getCustomTargetSource(beanClass, beanName);
 		if (targetSource != null) {
 			if (StringUtils.hasLength(beanName)) {
